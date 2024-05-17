@@ -5,7 +5,9 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
-import jetbrains.org.plugins.*
+import jetbrains.org.model.User
+import jetbrains.org.model.UserType
+import jetbrains.org.routing.repository
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlin.test.*
@@ -21,7 +23,7 @@ class ApplicationTest {
     private val testApp = TestApplication {
         application {
             module()
-            users = fakeData //FIXME: this is another hack
+            repository.storage = fakeData //FIXME: still a hack
         }
     }
 
