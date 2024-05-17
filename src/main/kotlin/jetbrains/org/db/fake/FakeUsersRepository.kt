@@ -7,12 +7,20 @@ class FakeUsersRepository : UsersRepository {
 
     var storage = mutableListOf<User>()
 
-    override fun findAll(): List<User> = storage
+    override suspend fun findAll(): List<User> = storage
 
-    override fun save(user: User): Boolean = storage.add(user)
+    override suspend fun save(user: User): Int {
+        storage.add(user)
+        return 1
+    }
 
-    override fun find(id: Int): User? = storage.find { it.userId == id }
+    override suspend fun find(id: Long): User? = storage.find {
+        it.userId == id
+    }
 
-    override fun delete(user: User): Boolean = storage.remove(user)
+    override suspend fun delete(user: User): Int {
+        storage.remove(user)
+        return 1
+    }
 
 }

@@ -81,7 +81,7 @@ class ApplicationTest {
         val user = fakeData.first()
         val updatedDataResponse = client.put("/users/${user.userId}") {
             contentType(ContentType.Application.Json)
-            setBody(user.copy(displayName = "Mr. ${user.displayName}"))
+            setBody(user.copy(name = "Mr. ${user.name}"))
         }
         assertEquals(HttpStatusCode.OK, updatedDataResponse.status)
         assertEquals("Data updated successfully", updatedDataResponse.bodyAsText())

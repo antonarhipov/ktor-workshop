@@ -31,7 +31,7 @@ fun Application.configureRouting() {
             }
             get("/{userId}") {
                 call.parameters["userId"]?.let {
-                    val user = repository.find(it.toInt())
+                    val user = repository.find(it.toLong())
                     if (user != null) {
                         call.respond(user)
                     } else {
@@ -40,7 +40,7 @@ fun Application.configureRouting() {
                 }
             }
             put("/{userId}") {
-                val userId = call.parameters["userId"]?.toInt()
+                val userId = call.parameters["userId"]?.toLong()
 
                 val updatedUser = call.receive<User>()
                 if (userId != null) {
@@ -55,7 +55,7 @@ fun Application.configureRouting() {
                 }
             }
             delete("/{userId}") {
-                val userId = call.parameters["userId"]?.toInt()
+                val userId = call.parameters["userId"]?.toLong()
                 if (userId != null) {
                     val deleted = repository.find(userId)
                     if (deleted != null) {
