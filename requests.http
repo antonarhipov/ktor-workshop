@@ -1,0 +1,52 @@
+###
+GET http://localhost:8080/users
+Content-Type: application/json
+
+###
+POST localhost:8080/users
+Content-Type: application/json
+
+{
+  "userId": 0,
+  "name": "John Doe Moe",
+  "userType": "REGISTERED",
+  "email": "a2.a@a.com",
+  "link": "hello.world1",
+  "aboutMe": "Hello23",
+  "content": [
+    {
+      "contentId": 1,
+      "text": "one two three",
+      "createdAt" : "2010-06-01T22:19:44"
+    }
+  ]
+}
+
+###
+PUT localhost:8080/users/0
+Content-Type: application/json
+
+{
+  "userId": 0,
+  "name": "John Doe",
+  "userType": "REGISTERED",
+  "email": "a2.a@a.com",
+  "link": "hello.world1",
+  "aboutMe": "Hello23",
+  "content": [
+    {
+      "contentId": 1,
+      "text": "one two three",
+      "createdAt" : "2010-06-01T22:19:44"
+    }
+  ]
+}
+
+###
+@userId =0
+GET http://localhost:8080/users/{{userId}}
+Content-Type: application/json
+
+####
+@userIdToDelete =0
+DELETE http://localhost:8080/users/{{userIdToDelete}}

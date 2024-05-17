@@ -9,9 +9,8 @@ class FakeUsersRepository : UsersRepository {
 
     override suspend fun findAll(): List<User> = storage
 
-    override suspend fun save(user: User): Int {
+    override suspend fun save(user: User) {
         storage.add(user)
-        return 1
     }
 
     override suspend fun find(id: Long): User? = storage.find {

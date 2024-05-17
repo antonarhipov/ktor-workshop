@@ -3,6 +3,7 @@ package jetbrains.org.db
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
+import jetbrains.org.model.Content
 import jetbrains.org.model.User
 import jetbrains.org.model.UserType
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,7 @@ val usersDataModule = module {
 
 interface UsersRepository {
     suspend fun findAll(): List<User>
-    suspend fun save(user: User): Int
+    suspend fun save(user: User)
     suspend fun find(id: Long): User?
     suspend fun delete(user: User): Int
 }
@@ -26,38 +27,75 @@ interface UsersRepository {
 class UsersRepositoryImpl : UsersRepository {
 
     override suspend fun findAll(): List<User> = suspendTransaction {
-            UserTable.selectAll().map { row: ResultRow ->
+        UserTable.selectAll()
+            .orderBy(UserTable.id, SortOrder.ASC)
+            .map { row: ResultRow ->
                 User(
                     userId = row[UserTable.id],
-                    userType = UserType.REGISTERED,
                     name = row[UserTable.name],
-                    email = row[UserTable.email],
+                    userType = row[UserTable.userType],
                     link = row[UserTable.link],
+                    email = row[UserTable.email],
                     aboutMe = row[UserTable.aboutMe]
                 )
             }
-        }
-
-    override suspend fun save(user: User): Int = suspendTransaction {
-            UserTable.insert { row ->
-                row[UserTable.id] = user.userId
-                row[UserTable.name] = user.name
-                row[UserTable.link] = user.link
-                row[UserTable.email] = user.email
-                row[UserTable.aboutMe] = user.aboutMe
+            .map { user ->
+                user.apply {
+                    content += ContentTable.selectAll()
+                        .where {
+                            ContentTable.author eq user.userId
+                        }.map { row ->
+                            Content(
+                                contentId = row[ContentTable.contentId],
+                                text = row[ContentTable.text],
+                                createdAt = row[ContentTable.createdAt],
+                            )
+                        }
+                }
             }
-        }.insertedCount
+    }
+
+    override suspend fun save(user: User) = suspendTransaction {
+        val insertedUserId = UserTable.insert { row ->
+            row[UserTable.id] = user.userId
+            row[UserTable.name] = user.name
+            row[UserTable.userType] = user.userType
+            row[UserTable.link] = user.link
+            row[UserTable.email] = user.email
+            row[UserTable.aboutMe] = user.aboutMe
+        } get UserTable.id
+
+        user.content.forEach {
+            ContentTable.insert { row ->
+                row[ContentTable.contentId] = it.contentId
+                row[ContentTable.text] = it.text
+                row[ContentTable.createdAt] = it.createdAt
+                row[ContentTable.author] = insertedUserId
+            }
+        }
+    }
 
     override suspend fun find(id: Long): User? = suspendTransaction {
         UserTable.selectAll().where { UserTable.id eq id }.singleOrNull()?.let { row ->
             User(
                 userId = row[UserTable.id],
-                userType = UserType.REGISTERED,
                 name = row[UserTable.name],
+                userType = UserType.REGISTERED,
                 link = row[UserTable.link],
                 email = row[UserTable.email],
                 aboutMe = row[UserTable.aboutMe]
             )
+        }?.apply {
+            content += ContentTable.selectAll()
+                .where {
+                    ContentTable.author eq userId
+                }.map { row ->
+                    Content(
+                        contentId = row[ContentTable.contentId],
+                        text = row[ContentTable.text],
+                        createdAt = row[ContentTable.createdAt],
+                    )
+                }
         }
     }
 
@@ -74,7 +112,7 @@ suspend fun <T> suspendTransaction(block: suspend () -> T): T =
 fun Application.connectToDatabase() /* = with(environment.config) */ {
     val dataSource = Database.connect(configureDataSource(false))
     transaction(dataSource) {
-        SchemaUtils.createMissingTablesAndColumns(UserTable)
+        SchemaUtils.createMissingTablesAndColumns(UserTable, ContentTable)
     }
 }
 
