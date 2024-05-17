@@ -23,11 +23,11 @@ Content-Type: application/json
 }
 
 ###
-PUT localhost:8080/users/0
+PUT localhost:8080/users/1
 Content-Type: application/json
 
 {
-  "userId": 0,
+  "userId": 1,
   "name": "John Doe",
   "userType": "REGISTERED",
   "email": "a2.a@a.com",
@@ -43,7 +43,7 @@ Content-Type: application/json
 }
 
 ###
-@userId =0
+@userId =1
 GET http://localhost:8080/users/{{userId}}
 Content-Type: application/json
 

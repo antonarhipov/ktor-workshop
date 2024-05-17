@@ -41,13 +41,10 @@ fun Application.configureRouting() {
             }
             put("/{userId}") {
                 val userId = call.parameters["userId"]?.toLong()
-
                 val updatedUser = call.receive<User>()
                 if (userId != null) {
-                    val oldUser = repository.find(userId)
-                    if (oldUser != null) {
-                        repository.delete(oldUser)
-                        repository.save(updatedUser)
+                    val update = repository.update(updatedUser)
+                    if (update) {
                         call.respond(status = HttpStatusCode.OK, message = "Data updated successfully")
                     } else {
                         call.respond(status = HttpStatusCode.NotFound, message = "Data to update not found")
@@ -55,16 +52,7 @@ fun Application.configureRouting() {
                 }
             }
             delete("/{userId}") {
-                val userId = call.parameters["userId"]?.toLong()
-                if (userId != null) {
-                    val deleted = repository.find(userId)
-                    if (deleted != null) {
-                        repository.delete(deleted)
-                        call.respond(status = HttpStatusCode.OK, message = "Data deleted successfully")
-                    } else {
-                        call.respond(status = HttpStatusCode.NotFound, message = "Data to delete not found")
-                    }
-                }
+                TODO("We don't delete anything")
             }
         }
     }

@@ -7,8 +7,8 @@ import jetbrains.org.model.Content
 import jetbrains.org.model.User
 import jetbrains.org.model.UserType
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.koin.dsl.module
@@ -21,86 +21,93 @@ interface UsersRepository {
     suspend fun findAll(): List<User>
     suspend fun save(user: User)
     suspend fun find(id: Long): User?
-    suspend fun delete(user: User): Int
+    suspend fun update(user: User) : Boolean
 }
 
 class UsersRepositoryImpl : UsersRepository {
 
     override suspend fun findAll(): List<User> = suspendTransaction {
-        UserTable.selectAll()
-            .orderBy(UserTable.id, SortOrder.ASC)
-            .map { row: ResultRow ->
+
+        UserDAO.all()
+            .orderBy()
+            .map {
                 User(
-                    userId = row[UserTable.id],
-                    name = row[UserTable.name],
-                    userType = row[UserTable.userType],
-                    link = row[UserTable.link],
-                    email = row[UserTable.email],
-                    aboutMe = row[UserTable.aboutMe]
+                    userId = it.id.value,
+                    userType = UserType.REGISTERED,
+                    name = it.name,
+                    email = it.email,
+                    link = it.link,
+                    aboutMe = it.aboutMe
                 )
-            }
-            .map { user ->
-                user.apply {
-                    content += ContentTable.selectAll()
-                        .where {
-                            ContentTable.author eq user.userId
-                        }.map { row ->
+            }.map {
+                it.apply {
+                    content += ContentDAO.find { ContentTable.author eq it.userId }
+                        .map {
                             Content(
-                                contentId = row[ContentTable.contentId],
-                                text = row[ContentTable.text],
-                                createdAt = row[ContentTable.createdAt],
+                                contentId = it.id.value,
+                                text = it.text,
+                                createdAt = it.createdAt
                             )
                         }
                 }
             }
     }
 
+    override suspend fun update(user: User): Boolean = suspendTransaction {
+        UserDAO.findByIdAndUpdate(user.userId) {
+            it.name = user.name
+            it.email = user.email
+            it.link = user.link
+            it.aboutMe = user.aboutMe
+        }?.also { userDao ->
+            user.content.forEach { content ->
+                ContentDAO.findByIdAndUpdate(content.contentId) {
+                    it.text = content.text
+                    it.createdAt = content.createdAt
+                    it.author = userDao
+                }
+            }
+        } != null
+    }
+
     override suspend fun save(user: User) = suspendTransaction {
-        val insertedUserId = UserTable.insert { row ->
-            row[UserTable.id] = user.userId
-            row[UserTable.name] = user.name
-            row[UserTable.userType] = user.userType
-            row[UserTable.link] = user.link
-            row[UserTable.email] = user.email
-            row[UserTable.aboutMe] = user.aboutMe
-        } get UserTable.id
+        val newUser: UserDAO = UserDAO.new {
+            this.name = user.name
+            this.userType = user.userType
+            this.link = user.link
+            this.email = user.email
+            this.aboutMe = user.aboutMe
+        }
 
         user.content.forEach {
-            ContentTable.insert { row ->
-                row[ContentTable.contentId] = it.contentId
-                row[ContentTable.text] = it.text
-                row[ContentTable.createdAt] = it.createdAt
-                row[ContentTable.author] = insertedUserId
+            ContentDAO.new(id = it.contentId) {
+                text = it.text
+                createdAt = it.createdAt
+                author = newUser
             }
         }
     }
 
     override suspend fun find(id: Long): User? = suspendTransaction {
-        UserTable.selectAll().where { UserTable.id eq id }.singleOrNull()?.let { row ->
+        UserDAO.findById(id)?.run {
             User(
-                userId = row[UserTable.id],
-                name = row[UserTable.name],
+                userId = this.id.value,
                 userType = UserType.REGISTERED,
-                link = row[UserTable.link],
-                email = row[UserTable.email],
-                aboutMe = row[UserTable.aboutMe]
-            )
-        }?.apply {
-            content += ContentTable.selectAll()
-                .where {
-                    ContentTable.author eq userId
-                }.map { row ->
-                    Content(
-                        contentId = row[ContentTable.contentId],
-                        text = row[ContentTable.text],
-                        createdAt = row[ContentTable.createdAt],
-                    )
-                }
+                name = this.name,
+                email = this.email,
+                link = this.link,
+                aboutMe = this.aboutMe
+            ).apply {
+                content += ContentDAO.find { ContentTable.author eq userId }
+                    .map {
+                        Content(
+                            contentId = it.id.value,
+                            text = it.text,
+                            createdAt = it.createdAt
+                        )
+                    }
+            }
         }
-    }
-
-    override suspend fun delete(user: User): Int = suspendTransaction {
-        UserTable.deleteWhere { UserTable.id eq user.userId }
     }
 
 }

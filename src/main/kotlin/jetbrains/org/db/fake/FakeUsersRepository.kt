@@ -17,9 +17,14 @@ class FakeUsersRepository : UsersRepository {
         it.userId == id
     }
 
-    override suspend fun delete(user: User): Int {
-        storage.remove(user)
-        return 1
+    override suspend fun update(user: User): Boolean {
+        val u = find(user.userId)
+        if (u != null) {
+            storage.remove(u)
+            storage.add(user)
+            return true
+        }
+        return false
     }
 
 }
