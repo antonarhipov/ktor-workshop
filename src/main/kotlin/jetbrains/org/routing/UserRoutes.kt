@@ -38,15 +38,11 @@ fun Application.configureRouting() {
                 }
             }
             put("/{userId}") {
-                println(">>>>>>>>>> calling PUT")
                 val userId = call.parameters["userId"]?.toInt()
-                println(">>>>>>>>>> calling PUT with user id $userId")
 
                 val updatedUser = call.receive<User>()
-                println(">>>>>>>>>> calling PUT for user $updatedUser")
                 if (userId != null) {
                     val oldUser = repository.find(userId)
-                    println(">>>>>>>>>> old user $oldUser")
                     if (oldUser != null) {
                         repository.delete(oldUser)
                         repository.save(updatedUser)
