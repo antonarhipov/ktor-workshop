@@ -5,11 +5,16 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
+import jetbrains.org.db.UsersRepository
+import jetbrains.org.db.fake.FakeUsersRepository
 import jetbrains.org.model.User
 import jetbrains.org.model.UserType
-import jetbrains.org.routing.repository
+import jetbrains.org.plugins.configureSerialization
+import jetbrains.org.routing.configureRouting
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import org.koin.dsl.module
+import org.koin.ktor.plugin.Koin
 import kotlin.test.*
 
 class ApplicationTest {
@@ -21,9 +26,20 @@ class ApplicationTest {
     )
 
     private val testApp = TestApplication {
+        install(Koin) {
+            modules(
+                module {
+                    single<UsersRepository> {
+                        FakeUsersRepository().apply { storage = fakeData }
+                        //we can also just implement UserRepository interface here
+                        //object : UsersRepository {}
+                    }
+                }
+            )
+        }
         application {
-            module()
-            repository.storage = fakeData //FIXME: still a hack
+            configureSerialization()
+            configureRouting()
         }
     }
 

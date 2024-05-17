@@ -5,12 +5,14 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import jetbrains.org.db.fake.FakeUsersRepository
+import jetbrains.org.db.UsersRepository
 import jetbrains.org.model.User
-
-val repository = FakeUsersRepository()
+import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
+
+    val repository by inject<UsersRepository>()
+
     routing {
         get("/") {
             call.respondText("Hello World!")
