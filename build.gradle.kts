@@ -46,4 +46,9 @@ dependencies {
 
     testImplementation("io.ktor:ktor-server-tests-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.testcontainers:testcontainers:1.19.8")
+    testImplementation("org.testcontainers:postgresql:1.19.8")
+    testImplementation("org.testcontainers:junit-jupiter:1.19.8")
+    testImplementation("org.awaitility:awaitility:4.1.1")
+
 }
