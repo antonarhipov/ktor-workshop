@@ -118,9 +118,9 @@ suspend fun <T> suspendTransaction(block: suspend () -> T): T =
 // by using with(environment.config) we can get access to the application.conf configuration file
 fun Application.connectToDatabase() /* = with(environment.config) */ {
     val dataSource = Database.connect(configureDataSource(false))
-    transaction(dataSource) {
-        SchemaUtils.createMissingTablesAndColumns(UserTable, ContentTable)
-    }
+//    transaction(dataSource) {
+//        SchemaUtils.createMissingTablesAndColumns(UserTable, ContentTable)
+//    }
 }
 
 fun configureDataSource(embedded: Boolean): HikariDataSource = HikariDataSource(HikariConfig().apply {

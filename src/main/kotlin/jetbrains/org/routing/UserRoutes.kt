@@ -2,6 +2,7 @@ package jetbrains.org.routing
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -24,11 +25,6 @@ fun Application.configureRouting() {
             get {
                 call.respond(repository.findAll())
             }
-            post {
-                val user = call.receive<User>()
-                repository.save(user)
-                call.respond(status = HttpStatusCode.Created, message = "Data added successfully")
-            }
             get("/{userId}") {
                 call.parameters["userId"]?.let {
                     val user = repository.find(it.toLong())
@@ -39,15 +35,22 @@ fun Application.configureRouting() {
                     }
                 }
             }
-            put("/{userId}") {
-                val userId = call.parameters["userId"]?.toLong()
-                val updatedUser = call.receive<User>()
-                if (userId != null) {
-                    val update = repository.update(updatedUser)
-                    if (update) {
-                        call.respond(status = HttpStatusCode.OK, message = "Data updated successfully")
-                    } else {
-                        call.respond(status = HttpStatusCode.NotFound, message = "Data to update not found")
+            authenticate("auth-jwt") {
+                post {
+                    val user = call.receive<User>()
+                    repository.save(user)
+                    call.respond(status = HttpStatusCode.Created, message = "Data added successfully")
+                }
+                put("/{userId}") {
+                    val userId = call.parameters["userId"]?.toLong()
+                    val updatedUser = call.receive<User>()
+                    if (userId != null) {
+                        val update = repository.update(updatedUser)
+                        if (update) {
+                            call.respond(status = HttpStatusCode.OK, message = "Data updated successfully")
+                        } else {
+                            call.respond(status = HttpStatusCode.NotFound, message = "Data to update not found")
+                        }
                     }
                 }
             }

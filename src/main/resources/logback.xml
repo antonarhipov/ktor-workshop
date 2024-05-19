@@ -11,5 +11,7 @@
     <logger name="io.netty" level="INFO"/>
 
     <logger name="org.testcontainers" level="INFO"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+    <logger name="com.zaxxer.hikari.pool" level="INFO"/>
     <logger name="com.github.dockerjava" level="WARN"/>
 </configuration>

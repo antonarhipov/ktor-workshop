@@ -15,6 +15,7 @@ fun main() {
 fun Application.module() {
     configureKoin()
     configureSerialization()
+    configureAuthentication()
     connectToDatabase()
     configureRouting()
 }
