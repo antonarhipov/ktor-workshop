@@ -3,7 +3,6 @@ package jetbrains.org
 import io.ktor.server.application.Application
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import jetbrains.org.db.connectToDatabase
 import jetbrains.org.plugins.*
 import jetbrains.org.routing.configureRouting
 
