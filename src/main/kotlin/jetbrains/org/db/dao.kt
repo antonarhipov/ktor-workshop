@@ -1,6 +1,9 @@
 package jetbrains.org.db
 
 
+import jetbrains.org.model.Content
+import jetbrains.org.model.User
+import jetbrains.org.model.UserType
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
@@ -16,7 +19,7 @@ class UserDAO(id: LongId) : LongEntity(id) {
     var aboutMe by UserTable.aboutMe
     var userType by UserTable.userType
 
-//    val contentItems by ContentDAO referrersOn ContentTable.author
+    val contentItems by ContentDAO referrersOn ContentTable.author
 
     override fun toString(): String =
         "User(name='$name', email='$email')"
@@ -32,3 +35,20 @@ class ContentDAO(id: LongId) : LongEntity(id) {
 
     override fun toString(): String = "Content(text='$text', author=$author, createdAt=$createdAt)"
 }
+
+fun UserDAO.toUser() =
+    User(
+        userId = id.value,
+        userType = UserType.REGISTERED,
+        name = name,
+        email = email,
+        link = link,
+        aboutMe = aboutMe,
+        content = this.contentItems.map {
+            Content(
+                contentId = it.id.value,
+                text = it.text,
+                createdAt = it.createdAt
+            )
+        }.toMutableList()
+    )

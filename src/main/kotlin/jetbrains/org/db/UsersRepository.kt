@@ -3,9 +3,7 @@ package jetbrains.org.db
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.*
-import jetbrains.org.model.Content
 import jetbrains.org.model.User
-import jetbrains.org.model.UserType
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -27,30 +25,9 @@ interface UsersRepository {
 class UsersRepositoryImpl : UsersRepository {
 
     override suspend fun findAll(): List<User> = suspendTransaction {
-
         UserDAO.all()
             .orderBy()
-            .map {
-                User(
-                    userId = it.id.value,
-                    userType = UserType.REGISTERED,
-                    name = it.name,
-                    email = it.email,
-                    link = it.link,
-                    aboutMe = it.aboutMe
-                )
-            }.map {
-                it.apply {
-                    content += ContentDAO.find { ContentTable.author eq it.userId }
-                        .map {
-                            Content(
-                                contentId = it.id.value,
-                                text = it.text,
-                                createdAt = it.createdAt
-                            )
-                        }
-                }
-            }
+            .map(UserDAO::toUser)
     }
 
     override suspend fun update(user: User): Boolean = suspendTransaction {
@@ -89,25 +66,7 @@ class UsersRepositoryImpl : UsersRepository {
     }
 
     override suspend fun find(id: Long): User? = suspendTransaction {
-        UserDAO.findById(id)?.run {
-            User(
-                userId = this.id.value,
-                userType = UserType.REGISTERED,
-                name = this.name,
-                email = this.email,
-                link = this.link,
-                aboutMe = this.aboutMe
-            ).apply {
-                content += ContentDAO.find { ContentTable.author eq userId }
-                    .map {
-                        Content(
-                            contentId = it.id.value,
-                            text = it.text,
-                            createdAt = it.createdAt
-                        )
-                    }
-            }
-        }
+        UserDAO.findById(id)?.toUser()
     }
 
 }
